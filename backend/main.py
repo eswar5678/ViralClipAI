@@ -24,7 +24,8 @@ from fastapi.staticfiles import StaticFiles
 from backend.config import BASE_DIR, UPLOADS_DIR, CLIPS_DIR, TEMP_DIR, COOKIES_FILE, AppSettings, load_settings, save_settings, get_ffmpeg_path
 from backend.models import (
     VideoMetadata, ClipSuggestion, VideoProcessRequest,
-    RenderClipRequest, YouTubeUploadRequest, YouTubeQueueItem, WSProgressMessage
+    RenderClipRequest, YouTubeUploadRequest, YouTubeQueueItem, WSProgressMessage,
+    SubtitleSentence, StyleSegment
 )
 from backend.services.downloader import download_youtube_video, extract_video_metadata
 from backend.services.transcriber import transcribe_audio
