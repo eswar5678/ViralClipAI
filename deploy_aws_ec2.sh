@@ -28,19 +28,24 @@ else
     echo "⚠️ Unknown package manager. Attempting to proceed..."
 fi
 
-sudo systemctl enable --now docker
+if command -v systemctl &> /dev/null && [ -d /run/systemd/system ]; then
+    sudo systemctl enable --now docker
+else
+    echo "Starting Docker service via init/dockerd..."
+    sudo service docker start 2>/dev/null || sudo /etc/init.d/docker start 2>/dev/null || (sudo dockerd > /dev/null 2>&1 &) || true
+fi
 sudo usermod -aG docker "$USER" || true
 
 # 2. Configure 4GB Swap Space (Crucial for EC2 Free Tier t2.micro/t3.micro)
 # Without swap, FFmpeg rendering will trigger the Linux OOM Killer on 1GB RAM.
 if [ ! -f /swapfile ]; then
     echo "[2/5] Configuring 4GB Swap Space for smooth FFmpeg video rendering..."
-    sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
-    sudo chmod 600 /swapfile
-    sudo mkswap /swapfile
-    sudo swapon /swapfile
-    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-    echo "✅ 4GB Swap memory enabled successfully."
+    (sudo dd if=/dev/zero of=/swapfile bs=1M count=4096 && \
+     sudo chmod 600 /swapfile && \
+     sudo mkswap /swapfile && \
+     sudo swapon /swapfile && \
+     echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab) 2>/dev/null || echo "⚠️ Swap configuration skipped (container/restricted environment)."
+    echo "✅ Swap memory step finished."
 else
     echo "[2/5] Swap space already exists. Skipping."
 fi
