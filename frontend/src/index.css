@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#07090E] text-slate-100 antialiased selection:bg-indigo-500 selection:text-white;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Custom Sleek Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0B0F17;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1E293B;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+  }
+}
+
+/* Glassmorphism effects */
+.glass-panel {
+  background: rgba(16, 23, 38, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(19, 27, 46, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(26, 37, 61, 0.8);
+  border-color: rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(99, 102, 241, 0.15);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.35);
+}
+
+.glow-indigo {
+  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.4);
+}
+
+.glow-youtube {
+  box-shadow: 0 0 25px -5px rgba(239, 68, 68, 0.35);
+}
+
+/* Hormozi Subtitle Style */
+.hormozi-active {
+  color: #FFD700;
+  text-shadow: 0 0 16px rgba(255, 215, 0, 0.9), 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+  transform: scale(1.14);
+  display: inline-block;
+  transition: transform 0.08s ease-out;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+}
+
+.hormozi-static {
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 4px 8px rgba(0, 0, 0, 0.8);
+  display: inline-block;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+}
+
+/* Cyber Subtitle Style */
+.cyber-active {
+  color: #00F0FF;
+  text-shadow: 0 0 18px rgba(0, 240, 255, 0.95), 0 0 32px rgba(217, 0, 255, 0.8), 2px 2px 0 #D900FF, -2px -2px 0 #D900FF;
+  transform: scale(1.15);
+  display: inline-block;
+  transition: transform 0.08s ease-out;
+  font-family: 'Impact', 'Arial Black', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.cyber-static {
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 #D900FF, -2px -2px 0 #D900FF, 0 0 10px rgba(0, 240, 255, 0.5);
+  display: inline-block;
+  font-family: 'Impact', 'Arial Black', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+/* Beast Mode Subtitle Style */
+.beast-active {
+  color: #FF3B30;
+  text-shadow: 0 0 20px rgba(255, 59, 48, 0.95), 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+  transform: scale(1.18);
+  display: inline-block;
+  transition: transform 0.08s ease-out;
+  font-family: 'Arial Black', sans-serif;
+  font-weight: 900;
+}
+
+.beast-static {
+  color: #FFCC00;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 4px 8px rgba(0, 0, 0, 0.9);
+  display: inline-block;
+  font-family: 'Arial Black', sans-serif;
+  font-weight: 900;
+}
+
+/* Minimalist Subtitle Style */
+.minimalist-active {
+  color: #FFFFFF;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0 4px;
+  border-radius: 4px;
+  transform: scale(1.05);
+  display: inline-block;
+  transition: transform 0.08s ease-out;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+}
+
+.minimalist-static {
+  color: #D1D5DB;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+
+/* Mobile responsive utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+button, a, input, select {
+  touch-action: manipulation;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+

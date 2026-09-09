@@ -1,0 +1,12 @@
+{
+  "name": "viralclip-ai-desktop",
+  "version": "1.0.0",
+  "description": "Opus-Level AI Video Clipper & YouTube Auto-Poster for Windows",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^34.2.0"
+  }
+}
