@@ -547,49 +547,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* YouTube Cookies Upload (Age-Restricted Downloads) */}
-              <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                    <span>🍪 YouTube Cookies (Bypass Age-Restricted Errors)</span>
-                  </span>
-                  <a
-                    href="https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-400 hover:underline flex items-center gap-1 text-[11px]"
-                  >
-                    <span>Cookie Guide</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-                <p className="text-[11px] text-slate-400">
-                  Export cookies from your browser (using the free Chrome/Edge extension &quot;Get cookies.txt locally&quot;) and upload here to clip age-restricted videos like GTA without sign-in blocks.
-                </p>
-                <div className="flex items-center gap-3 pt-1">
-                  <input
-                    type="file"
-                    accept=".txt"
-                    ref={cookiesFileRef}
-                    onChange={handleUploadCookies}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => cookiesFileRef.current?.click()}
-                    disabled={isUploadingCookies}
-                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-indigo-500 text-xs text-slate-200 font-semibold cursor-pointer"
-                  >
-                    {isUploadingCookies ? 'Uploading...' : 'Upload cookies.txt'}
-                  </button>
-                  {cookieUploadMsg && (
-                    <span className="text-xs text-emerald-400 font-medium">{cookieUploadMsg}</span>
-                  )}
-                </div>
-              </div>
             </div>
           )}
+
+          {/* YouTube Cookies Upload (Always visible for bypassing bot/datacenter checks) */}
+          <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800/80 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <span>🍪 YouTube Cookies (Bypass Bot & Age-Restricted Blocks)</span>
+              </span>
+              <a
+                href="https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp"
+                target="_blank"
+                rel="noreferrer"
+                className="text-indigo-400 hover:underline flex items-center gap-1 text-[11px]"
+              >
+                <span>Cookie Guide</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Export cookies from your browser (using the free Chrome/Edge extension &quot;Get cookies.txt locally&quot;) and upload here to bypass YouTube datacenter bot detection and age blocks.
+            </p>
+            <div className="flex items-center gap-3 pt-1">
+              <input
+                type="file"
+                accept=".txt"
+                ref={cookiesFileRef}
+                onChange={handleUploadCookies}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => cookiesFileRef.current?.click()}
+                disabled={isUploadingCookies}
+                className="px-3.5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 hover:border-indigo-500 text-xs text-indigo-200 font-semibold cursor-pointer transition-all"
+              >
+                {isUploadingCookies ? 'Uploading...' : 'Upload cookies.txt'}
+              </button>
+              {cookieUploadMsg && (
+                <span className="text-xs text-emerald-400 font-medium">{cookieUploadMsg}</span>
+              )}
+            </div>
+          </div>
 
           {/* Feedback messages */}
           {ytSuccessMsg && (
