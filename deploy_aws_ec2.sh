@@ -10,30 +10,40 @@ echo "===================================================================="
 echo "  🚀 Starting ViralClip AI Automated AWS EC2 Setup & Deployment"
 echo "===================================================================="
 
-# 1. Update OS packages
-echo "[1/6] Updating system packages..."
-sudo apt update -y
-sudo apt upgrade -y
+# 1. Update OS packages & Install Docker (Detects Amazon Linux, Ubuntu, Debian, CentOS)
+echo "[1/5] Detecting Linux distribution and installing packages..."
+if command -v dnf &> /dev/null; then
+    echo "Detected Amazon Linux / RHEL (dnf)..."
+    sudo dnf update -y
+    sudo dnf install -y docker git curl
+elif command -v yum &> /dev/null; then
+    echo "Detected Amazon Linux / CentOS (yum)..."
+    sudo yum update -y
+    sudo yum install -y docker git curl
+elif command -v apt-get &> /dev/null; then
+    echo "Detected Ubuntu / Debian (apt)..."
+    sudo apt-get update -y
+    sudo apt-get install -y docker.io git curl
+else
+    echo "⚠️ Unknown package manager. Attempting to proceed..."
+fi
+
+sudo systemctl enable --now docker
+sudo usermod -aG docker "$USER" || true
 
 # 2. Configure 4GB Swap Space (Crucial for EC2 Free Tier t2.micro/t3.micro)
 # Without swap, FFmpeg rendering will trigger the Linux OOM Killer on 1GB RAM.
 if [ ! -f /swapfile ]; then
-    echo "[2/6] Configuring 4GB Swap Space for smooth FFmpeg video rendering..."
-    sudo fallocate -l 4G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
+    echo "[2/5] Configuring 4GB Swap Space for smooth FFmpeg video rendering..."
+    sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
     sudo chmod 600 /swapfile
     sudo mkswap /swapfile
     sudo swapon /swapfile
     echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
     echo "✅ 4GB Swap memory enabled successfully."
 else
-    echo "[2/6] Swap space already exists. Skipping."
+    echo "[2/5] Swap space already exists. Skipping."
 fi
-
-# 3. Install Docker and required tools
-echo "[3/6] Installing Docker, Git, and dependencies..."
-sudo apt install -y docker.io git curl
-sudo systemctl enable --now docker
-sudo usermod -aG docker "$USER" || true
 
 # 4. Prepare directories
 echo "[4/6] Creating persistent data directories..."
