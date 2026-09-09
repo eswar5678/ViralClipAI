@@ -45,16 +45,16 @@ else
     echo "[2/5] Swap space already exists. Skipping."
 fi
 
-# 4. Prepare directories
-echo "[4/6] Creating persistent data directories..."
+# 3. Prepare directories
+echo "[3/5] Creating persistent data directories..."
 mkdir -p backend/data/uploads backend/data/clips backend/data/temp
 
-# 5. Build Docker Image
-echo "[5/6] Building ViralClip AI Docker container (Frontend + Backend + FFmpeg)..."
+# 4. Build Docker Image
+echo "[4/5] Building ViralClip AI Docker container (Frontend + Backend + FFmpeg)..."
 sudo docker build -t viralclip-ai .
 
-# 6. Stop any existing container and run new one on Port 80
-echo "[6/6] Launching ViralClip AI container on Port 80 (HTTP)..."
+# 5. Stop any existing container and run new one on Port 80
+echo "[5/5] Launching ViralClip AI container on Port 80 (HTTP)..."
 sudo docker stop viralclip 2>/dev/null || true
 sudo docker rm viralclip 2>/dev/null || true
 
