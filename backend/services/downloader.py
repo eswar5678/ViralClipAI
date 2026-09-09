@@ -144,8 +144,12 @@ def download_youtube_video(
         'merge_output_format': 'mp4',
         'extractor_args': {
             'youtube': {
-                'player_client': ['web', 'tv', 'default']
+                'player_client': ['ios', 'android', 'mweb', 'tv', 'web']
             }
+        },
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
         },
         'socket_timeout': 30,
         'retries': 10,
