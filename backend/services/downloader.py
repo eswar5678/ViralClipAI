@@ -115,6 +115,17 @@ def get_js_runtime() -> Optional[dict]:
         return {'node': {'path': node}}
     return None
 
+def get_outbound_proxy() -> Optional[str]:
+    """Detects if Cloudflare WARP or local SOCKS5 proxy is active to bypass datacenter IP restrictions."""
+    for host, port in [("172.17.0.1", 40001), ("127.0.0.1", 40000)]:
+        try:
+            import socket
+            with socket.create_connection((host, port), timeout=0.4):
+                return f"socks5://{host}:{port}"
+        except Exception:
+            pass
+    return None
+
 def download_youtube_video(
     youtube_url: str,
     progress_callback: Optional[Callable[[int, str], None]] = None
@@ -128,6 +139,8 @@ def download_youtube_video(
     ffmpeg_dir = os.path.dirname(ffmpeg_exe) if os.path.exists(ffmpeg_exe) else ffmpeg_exe
     js_runtime = get_js_runtime()
     has_cookies = COOKIES_FILE.exists() and COOKIES_FILE.stat().st_size > 10
+    session_cookie_file = None
+    proxy_url = get_outbound_proxy()
     
     def ytdl_hook(d):
         if d['status'] == 'downloading':
@@ -174,8 +187,17 @@ def download_youtube_video(
         'ignoreerrors': False,
     }
 
+    if proxy_url:
+        ydl_opts['proxy'] = proxy_url
+
     if has_cookies:
-        ydl_opts['cookiefile'] = str(COOKIES_FILE)
+        try:
+            # Create a temporary working copy so yt-dlp does not overwrite/strip the master cookies file
+            session_cookie_file = TEMP_DIR / f"cookie_{uuid.uuid4().hex[:8]}.txt"
+            shutil.copyfile(COOKIES_FILE, session_cookie_file)
+            ydl_opts['cookiefile'] = str(session_cookie_file)
+        except Exception:
+            ydl_opts['cookiefile'] = str(COOKIES_FILE)
         ydl_opts['extractor_args'] = {
             'youtube': {
                 'player_client': ['web', 'mweb', 'tv']
@@ -213,10 +235,19 @@ def download_youtube_video(
         err_msg = str(e)
         if "confirm your age" in err_msg.lower() or "age-restricted" in err_msg.lower():
             raise ValueError(
-                "This video is age-restricted by YouTube. "
-                "Please choose a non-age-restricted video or upload a cookies.txt file in Settings."
+                "This video is age-restricted. Please export cookies.txt using 'Get cookies.txt locally' and upload in Settings."
+            )
+        if "bot" in err_msg.lower():
+            raise ValueError(
+                "YouTube detected datacenter traffic. Proxying has been routed through Cloudflare WARP. If the issue persists, upload a fresh cookies.txt."
             )
         raise e
+    finally:
+        if session_cookie_file and session_cookie_file.exists():
+            try:
+                session_cookie_file.unlink()
+            except Exception:
+                pass
 
     if not os.path.exists(filename):
         raise FileNotFoundError("Downloaded YouTube video file could not be located on disk.")
