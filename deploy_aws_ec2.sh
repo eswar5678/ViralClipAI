@@ -14,10 +14,12 @@ echo "===================================================================="
 echo "[1/5] Detecting Linux distribution and installing packages..."
 if command -v dnf &> /dev/null; then
     echo "Detected Amazon Linux / RHEL (dnf)..."
-    sudo dnf install -y docker git || true
+    command -v docker &> /dev/null || sudo dnf install -y docker || true
+    command -v git &> /dev/null || sudo dnf install -y git || true
 elif command -v yum &> /dev/null; then
     echo "Detected Amazon Linux / CentOS (yum)..."
-    sudo yum install -y docker git || true
+    command -v docker &> /dev/null || sudo yum install -y docker || true
+    command -v git &> /dev/null || sudo yum install -y git || true
 elif command -v apt-get &> /dev/null; then
     echo "Detected Ubuntu / Debian (apt)..."
     sudo apt-get update -y
