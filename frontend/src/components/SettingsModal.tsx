@@ -40,6 +40,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [isUploadingCookies, setIsUploadingCookies] = useState(false);
   const [cookieUploadMsg, setCookieUploadMsg] = useState<string | null>(null);
   const secretsFileRef = useRef<HTMLInputElement>(null);
+  const tokenFileRef = useRef<HTMLInputElement>(null);
   const cookiesFileRef = useRef<HTMLInputElement>(null);
 
   const handleUploadCookies = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,6 +160,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       try {
         await api.uploadClientSecrets(e.target.files[0]);
         setYtSuccessMsg('client_secrets.json uploaded! You can now click Connect Channel.');
+      } catch (err: any) {
+        setYtError(err.message);
+      }
+    }
+  };
+
+  const handleTokenFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      try {
+        await api.uploadYouTubeToken(e.target.files[0]);
+        setYtSuccessMsg('youtube_token.json uploaded! Channel connected successfully.');
+        if (onRefreshChannel) onRefreshChannel();
       } catch (err: any) {
         setYtError(err.message);
       }
@@ -454,7 +467,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {channelInfo.subscriber_count && (
                       <>
                         <span>•</span>
-                        <span>{Number(channelInfo.subscriber_count).toLocaleString()} Subscribers</span>
+                        <span>
+                          {!isNaN(Number(channelInfo.subscriber_count))
+                            ? `${Number(channelInfo.subscriber_count).toLocaleString()} Subscribers`
+                            : channelInfo.subscriber_count}
+                        </span>
                       </>
                     )}
                   </div>
@@ -514,7 +531,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
                   >
                     <Upload className="w-3 h-3" />
-                    <span>Upload JSON File</span>
+                    <span>Upload Secrets JSON</span>
+                  </button>
+                </div>
+
+                {/* Upload youtube_token.json shortcut */}
+                <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">
+                    Already authorized? Upload <code className="text-emerald-300 bg-slate-950 px-1 py-0.5 rounded">youtube_token.json</code>:
+                  </span>
+                  <input
+                    type="file"
+                    ref={tokenFileRef}
+                    onChange={handleTokenFileUpload}
+                    accept=".json"
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => tokenFileRef.current?.click()}
+                    className="flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
+                  >
+                    <Upload className="w-3 h-3" />
+                    <span>Upload Token JSON</span>
                   </button>
                 </div>
               </div>

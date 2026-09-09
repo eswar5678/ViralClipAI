@@ -10,12 +10,15 @@ RUN npm run build
 # Stage 2: Python Backend with FFmpeg
 FROM python:3.11-slim
 
-# Install system dependencies & FFmpeg
+# Install system dependencies & FFmpeg & Deno (for yt-dlp JS challenge solver)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     git \
     curl \
+    unzip \
     nodejs \
+    && curl -fsSL https://deno.land/install.sh | sh \
+    && cp /root/.deno/bin/deno /usr/local/bin/deno \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

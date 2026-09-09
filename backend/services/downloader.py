@@ -87,19 +87,32 @@ def sanitize_youtube_url(url: str) -> str:
         return f"https://www.youtube.com/watch?v={v_id}"
     return url
 
-def get_node_path() -> Optional[str]:
-    """Finds Node.js binary for yt-dlp JavaScript challenge solver."""
-    p = shutil.which("node")
-    if p:
-        return p
-    for cand in [
-        r"D:\Apps\node.exe",
-        r"C:\Program Files\nodejs\node.exe",
-        r"C:\Program Files (x86)\nodejs\node.exe",
-        os.path.expanduser(r"~\AppData\Roaming\nvm\current\node.exe"),
-    ]:
-        if os.path.exists(cand):
-            return cand
+def get_js_runtime() -> Optional[dict]:
+    """Finds Deno or Node.js binary for yt-dlp JavaScript challenge solver."""
+    deno = shutil.which("deno")
+    if not deno:
+        for cand in ["/usr/local/bin/deno", os.path.expanduser("~/.deno/bin/deno"), r"C:\ProgramData\chocolatey\bin\deno.exe"]:
+            if os.path.exists(cand):
+                deno = cand
+                break
+    if deno:
+        return {'deno': {'path': deno}}
+    
+    node = shutil.which("node")
+    if not node:
+        for cand in [
+            r"D:\Apps\node.exe",
+            r"C:\Program Files\nodejs\node.exe",
+            r"C:\Program Files (x86)\nodejs\node.exe",
+            os.path.expanduser(r"~\AppData\Roaming\nvm\current\node.exe"),
+            "/usr/bin/node",
+            "/usr/local/bin/node"
+        ]:
+            if os.path.exists(cand):
+                node = cand
+                break
+    if node:
+        return {'node': {'path': node}}
     return None
 
 def download_youtube_video(
@@ -113,7 +126,8 @@ def download_youtube_video(
     output_template = str(UPLOADS_DIR / f"{video_id}_%(title).100s.%(ext)s")
     ffmpeg_exe = get_ffmpeg_path()
     ffmpeg_dir = os.path.dirname(ffmpeg_exe) if os.path.exists(ffmpeg_exe) else ffmpeg_exe
-    node_exe = get_node_path()
+    js_runtime = get_js_runtime()
+    has_cookies = COOKIES_FILE.exists() and COOKIES_FILE.stat().st_size > 10
     
     def ytdl_hook(d):
         if d['status'] == 'downloading':
@@ -142,11 +156,6 @@ def download_youtube_video(
         'ffmpeg_location': ffmpeg_dir,
         'progress_hooks': [ytdl_hook],
         'merge_output_format': 'mp4',
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['ios', 'android', 'mweb', 'tv', 'web']
-            }
-        },
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
@@ -165,11 +174,22 @@ def download_youtube_video(
         'ignoreerrors': False,
     }
 
-    if node_exe:
-        ydl_opts['js_runtimes'] = {'node': {'path': node_exe}}
-
-    if COOKIES_FILE.exists() and COOKIES_FILE.stat().st_size > 10:
+    if has_cookies:
         ydl_opts['cookiefile'] = str(COOKIES_FILE)
+        ydl_opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['web', 'mweb', 'tv']
+            }
+        }
+    else:
+        ydl_opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['ios', 'android', 'mweb', 'tv', 'web']
+            }
+        }
+
+    if js_runtime:
+        ydl_opts['js_runtimes'] = js_runtime
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

@@ -223,6 +223,20 @@ export const api = {
     return res.json();
   },
 
+  async uploadYouTubeToken(file: File): Promise<{ status: string; message: string; channel?: YouTubeChannelInfo }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${getApiBaseUrl()}/youtube/auth/upload_token`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to upload youtube_token.json' }));
+      throw new Error(err.detail || 'Upload failed');
+    }
+    return res.json();
+  },
+
   async disconnectYouTube(): Promise<{ status: string; disconnected: boolean }> {
     const res = await fetch(`${getApiBaseUrl()}/youtube/auth/disconnect`, {
       method: 'POST',

@@ -330,7 +330,7 @@ async def get_thumbnail(thumb_name: str):
 
 from backend.services.youtube_publisher import (
     upload_video_to_youtube, get_queue, save_queue, add_to_queue,
-    connect_youtube_oauth, disconnect_youtube, get_channel_details, CLIENT_SECRETS_FILE
+    connect_youtube_oauth, disconnect_youtube, get_channel_details, CLIENT_SECRETS_FILE, TOKEN_FILE
 )
 
 @app.get("/api/youtube/channel")
@@ -369,6 +369,18 @@ async def upload_client_secrets_file(file: UploadFile = File(...)):
         return {"status": "success", "message": "client_secrets.json uploaded successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid client_secrets.json: {str(e)}")
+
+@app.post("/api/youtube/auth/upload_token")
+async def upload_youtube_token_file(file: UploadFile = File(...)):
+    try:
+        content = await file.read()
+        json_data = json.loads(content.decode("utf-8"))
+        with open(TOKEN_FILE, "w", encoding="utf-8") as f:
+            json.dump(json_data, f, indent=2)
+        channel = get_channel_details()
+        return {"status": "success", "message": "youtube_token.json uploaded successfully", "channel": channel}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid youtube_token.json: {str(e)}")
 
 @app.post("/api/youtube/auth/disconnect")
 async def disconnect_youtube_account():
