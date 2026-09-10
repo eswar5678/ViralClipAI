@@ -72,23 +72,37 @@ export const AutoPilotModal: React.FC<AutoPilotModalProps> = ({
   const [isTestingEmail, setIsTestingEmail] = useState(false);
   const [isSavingEmail, setIsSavingEmail] = useState(false);
 
+  const isFormLoadedRef = React.useRef(false);
+
   useEffect(() => {
     if (isOpen) {
-      fetchStatus();
-      const interval = setInterval(fetchStatus, 6000);
+      isFormLoadedRef.current = false;
+      fetchStatus(true);
+      const interval = setInterval(() => fetchStatus(false), 5000);
       return () => clearInterval(interval);
     }
   }, [isOpen]);
 
-  const fetchStatus = async () => {
+  const fetchStatus = async (isInitial = false) => {
     try {
       const data = await api.getAutoPilotStatus();
       setStatusData(data);
-      if (data.config) {
-        setConfig(data.config);
-      }
-      if (data.email_alerts) {
-        setEmailAlerts(data.email_alerts);
+
+      // ONLY populate user-editable input fields on initial open, NEVER during background polling
+      if (isInitial || !isFormLoadedRef.current) {
+        if (data.config) {
+          setConfig(data.config);
+        }
+        if (data.email_alerts) {
+          const ea = data.email_alerts;
+          setEmailAlerts((prev) => ({
+            ...prev,
+            ...ea,
+            smtp_password: prev.smtp_password || '',
+            has_smtp_password: Boolean(ea.has_smtp_password),
+          }));
+        }
+        isFormLoadedRef.current = true;
       }
     } catch (e) {
       console.error('Failed to load autopilot status', e);
@@ -101,7 +115,9 @@ export const AutoPilotModal: React.FC<AutoPilotModalProps> = ({
     try {
       const res = await api.updateAlertConfig(emailAlerts);
       showNotification('success', res.message || 'Email alert preferences saved successfully!');
-      fetchStatus();
+      if (emailAlerts.smtp_password) {
+        setEmailAlerts((prev) => ({ ...prev, has_smtp_password: true }));
+      }
     } catch (e: any) {
       showNotification('error', e.message || 'Failed to save email alert settings');
     } finally {
@@ -208,7 +224,7 @@ export const AutoPilotModal: React.FC<AutoPilotModalProps> = ({
 
           <div className="flex items-center gap-2">
             <button
-              onClick={fetchStatus}
+              onClick={() => fetchStatus(false)}
               className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white transition-all cursor-pointer"
               title="Refresh status"
             >
