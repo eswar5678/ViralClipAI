@@ -15,6 +15,7 @@ import {
   WSProgressMessage,
   AutoPilotConfig,
   AutoPilotStatusResponse,
+  EmailAlertsConfig,
 } from './types';
 
 export const BACKEND_URL_STORAGE_KEY = 'viralclip_backend_url';
@@ -503,6 +504,33 @@ export const api = {
   async getAutoPilotLearnings(): Promise<any> {
     const res = await fetch(`${getApiBaseUrl()}/autopilot/learnings`);
     if (!res.ok) throw new Error('Failed to fetch Auto-Pilot learnings');
+    return res.json();
+  },
+
+  // Email Alert & Milestone API methods
+  async testEmailAlert(toEmail?: string): Promise<{ status: string; message: string }> {
+    const res = await fetch(`${getApiBaseUrl()}/alerts/test`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to_email: toEmail || null }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Test email failed' }));
+      throw new Error(err.detail || 'Test email request failed');
+    }
+    return res.json();
+  },
+
+  async updateAlertConfig(config: Partial<EmailAlertsConfig>): Promise<{ status: string; message: string; config: any }> {
+    const res = await fetch(`${getApiBaseUrl()}/alerts/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to update alert settings' }));
+      throw new Error(err.detail || 'Failed to update alert settings');
+    }
     return res.json();
   },
 };

@@ -668,6 +668,70 @@ async def autopilot_learnings_endpoint():
         "total_uploads": len(mem.get("uploads", []))
     }
 
+# ==========================================
+# EMAIL ALERTS & MILESTONE NOTIFICATIONS API
+# ==========================================
+
+class AlertTestRequest(BaseModel):
+    to_email: Optional[str] = None
+
+@app.post("/api/alerts/test")
+async def alerts_test_endpoint(req: Optional[AlertTestRequest] = None):
+    """Sends a test email to verify SMTP delivery."""
+    from backend.services.email_service import test_smtp_connection
+    target_email = req.to_email if req else None
+    return test_smtp_connection(to_email=target_email)
+
+class AlertConfigUpdateRequest(BaseModel):
+    alert_email: Optional[str] = None
+    smtp_enabled: Optional[bool] = None
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    notify_on_error: Optional[bool] = None
+    notify_on_milestone: Optional[bool] = None
+    milestone_view_threshold: Optional[int] = None
+
+@app.post("/api/alerts/config")
+async def alerts_config_endpoint(req: AlertConfigUpdateRequest):
+    """Updates email alert recipients, SMTP credentials, and milestone thresholds."""
+    settings = load_settings()
+    if req.alert_email is not None:
+        settings.alert_email = req.alert_email.strip()
+    if req.smtp_enabled is not None:
+        settings.smtp_enabled = req.smtp_enabled
+    if req.smtp_host is not None:
+        settings.smtp_host = req.smtp_host.strip()
+    if req.smtp_port is not None:
+        settings.smtp_port = req.smtp_port
+    if req.smtp_user is not None:
+        settings.smtp_user = req.smtp_user.strip()
+    if req.smtp_password is not None and req.smtp_password.strip():
+        settings.smtp_password = req.smtp_password.strip()
+    if req.notify_on_error is not None:
+        settings.notify_on_error = req.notify_on_error
+    if req.notify_on_milestone is not None:
+        settings.notify_on_milestone = req.notify_on_milestone
+    if req.milestone_view_threshold is not None:
+        settings.milestone_view_threshold = req.milestone_view_threshold
+    save_settings(settings)
+    return {
+        "status": "saved",
+        "message": "Email alert preferences saved successfully.",
+        "config": {
+            "alert_email": settings.alert_email,
+            "smtp_enabled": settings.smtp_enabled,
+            "smtp_host": settings.smtp_host,
+            "smtp_port": settings.smtp_port,
+            "smtp_user": settings.smtp_user,
+            "has_password": bool(settings.smtp_password),
+            "notify_on_error": settings.notify_on_error,
+            "notify_on_milestone": settings.notify_on_milestone,
+            "milestone_view_threshold": settings.milestone_view_threshold
+        }
+    }
+
 def get_frontend_dist() -> Optional[Path]:
     """Finds frontend dist folder across standard and PyInstaller environments."""
     candidates = [

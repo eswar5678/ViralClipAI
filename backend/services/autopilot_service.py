@@ -131,12 +131,35 @@ def reflect_and_learn_from_analytics() -> Dict[str, Any]:
         video_ids = [u.get("youtube_video_id") for u in uploads if u.get("youtube_video_id")]
         live_stats = get_uploaded_videos_stats(video_ids)
         stats_map = {s["video_id"]: s for s in live_stats}
+        settings = load_settings()
+        milestone_target = settings.milestone_view_threshold or 100000
+
         for u in uploads:
             vid = u.get("youtube_video_id")
             if vid in stats_map:
-                u["view_count"] = stats_map[vid].get("view_count", u.get("view_count", 0))
+                new_views = stats_map[vid].get("view_count", u.get("view_count", 0))
+                u["view_count"] = new_views
                 u["like_count"] = stats_map[vid].get("like_count", u.get("like_count", 0))
                 u["comment_count"] = stats_map[vid].get("comment_count", u.get("comment_count", 0))
+
+                # Check if video reached viral milestone (e.g. 100,000 views)
+                milestones_notified = u.get("milestones_notified", [])
+                milestone_key = f"{milestone_target // 1000}k" if milestone_target >= 1000 else str(milestone_target)
+                if new_views >= milestone_target and milestone_key not in milestones_notified:
+                    try:
+                        from backend.services.email_service import send_milestone_alert
+                        send_milestone_alert(
+                            video_title=u.get("title", "GTA Viral Short"),
+                            youtube_url=u.get("youtube_url") or f"https://youtube.com/shorts/{vid}",
+                            view_count=new_views,
+                            like_count=u.get("like_count", 0),
+                            milestone=milestone_target
+                        )
+                        milestones_notified.append(milestone_key)
+                        u["milestones_notified"] = milestones_notified
+                    except Exception as me:
+                        print(f"[AutoPilot Milestone Alert Error] {me}")
+
         memory["uploads"] = uploads
         save_agent_memory(memory)
 
@@ -367,6 +390,22 @@ def execute_autopilot_cycle() -> Dict[str, Any]:
         print(f"[AutoPilot Error] {err_str}")
         state.last_error = str(e)
         state.current_step = f"Failed: {str(e)}"
+
+        # Automatically dispatch emergency email alert to user
+        try:
+            from backend.services.email_service import send_error_alert
+            send_error_alert(
+                stage=state.current_step,
+                error_message=str(e),
+                details={
+                    "last_attempted_step": state.current_step,
+                    "target_niche": config.niche,
+                    "language": config.language,
+                }
+            )
+        except Exception as alert_err:
+            print(f"[AutoPilot Alert Dispatch Failed] {alert_err}")
+
         return {"status": "error", "message": str(e)}
     finally:
         state.is_running_cycle = False
@@ -398,7 +437,18 @@ def get_autopilot_status() -> Dict[str, Any]:
             "hook_strategies": memory.get("hook_strategies", []),
             "latest_reflection": memory.get("reflections", [{}])[0] if memory.get("reflections") else None
         },
-        "recent_uploads": memory.get("uploads", [])[:15]
+        "recent_uploads": memory.get("uploads", [])[:15],
+        "email_alerts": {
+            "alert_email": load_settings().alert_email,
+            "smtp_enabled": load_settings().smtp_enabled,
+            "smtp_host": load_settings().smtp_host,
+            "smtp_port": load_settings().smtp_port,
+            "smtp_user": load_settings().smtp_user,
+            "has_smtp_password": bool(load_settings().smtp_password),
+            "notify_on_error": load_settings().notify_on_error,
+            "notify_on_milestone": load_settings().notify_on_milestone,
+            "milestone_view_threshold": load_settings().milestone_view_threshold,
+        }
     }
 
 async def start_autopilot_background_loop():

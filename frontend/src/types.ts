@@ -104,6 +104,15 @@ export interface AppSettings {
   highlight_active_words?: boolean;
   local_ai_url?: string;
   local_ai_model?: string;
+  alert_email?: string;
+  smtp_enabled?: boolean;
+  smtp_host?: string;
+  smtp_port?: number;
+  smtp_user?: string;
+  smtp_password?: string;
+  notify_on_error?: boolean;
+  notify_on_milestone?: boolean;
+  milestone_view_threshold?: number;
 }
 
 export interface RenderClipRequest {
@@ -267,10 +276,24 @@ export interface AutoPilotLearnings {
   } | null;
 }
 
+export interface EmailAlertsConfig {
+  alert_email?: string;
+  smtp_enabled: boolean;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_user?: string;
+  smtp_password?: string;
+  has_smtp_password?: boolean;
+  notify_on_error: boolean;
+  notify_on_milestone: boolean;
+  milestone_view_threshold: number;
+}
+
 export interface AutoPilotStatusResponse {
   config: AutoPilotConfig;
   state: AutoPilotState;
   channel?: YouTubeChannelInfo | null;
   learnings: AutoPilotLearnings;
   recent_uploads: AutoPilotUploadRecord[];
+  email_alerts?: EmailAlertsConfig;
 }

@@ -43,6 +43,16 @@ class AppSettings(BaseModel):
     highlight_active_words: bool = True
     local_ai_url: str = "http://localhost:11434/v1"
     local_ai_model: str = "llama3:latest"
+    # Email Alerts & Milestones
+    alert_email: Optional[str] = ""
+    smtp_enabled: bool = False
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: Optional[str] = ""
+    smtp_password: Optional[str] = ""
+    notify_on_error: bool = True
+    notify_on_milestone: bool = True
+    milestone_view_threshold: int = 100000
 
 def load_settings() -> AppSettings:
     if SETTINGS_FILE.exists():

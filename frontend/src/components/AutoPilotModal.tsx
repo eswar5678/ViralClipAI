@@ -19,10 +19,13 @@ import {
   Zap,
   ShieldCheck,
   Gamepad2,
+  Mail,
+  Send,
+  Bell,
 } from 'lucide-react';
 import { YouTubeIcon } from './YouTubeIcon';
 import { api } from '../api';
-import { AutoPilotConfig, AutoPilotStatusResponse, YouTubeChannelInfo } from '../types';
+import { AutoPilotConfig, AutoPilotStatusResponse, YouTubeChannelInfo, EmailAlertsConfig } from '../types';
 
 interface AutoPilotModalProps {
   isOpen: boolean;
@@ -50,8 +53,24 @@ export const AutoPilotModal: React.FC<AutoPilotModalProps> = ({
     max_clip_duration: 55,
     min_clip_duration: 22,
   });
-  const [activeTab, setActiveTab] = useState<'status' | 'settings' | 'learnings' | 'uploads'>('status');
+  const [activeTab, setActiveTab] = useState<'status' | 'settings' | 'alerts' | 'learnings' | 'uploads'>('status');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Email Alert & Milestone Settings State
+  const [emailAlerts, setEmailAlerts] = useState<EmailAlertsConfig>({
+    alert_email: '',
+    smtp_enabled: false,
+    smtp_host: 'smtp.gmail.com',
+    smtp_port: 587,
+    smtp_user: '',
+    smtp_password: '',
+    has_smtp_password: false,
+    notify_on_error: true,
+    notify_on_milestone: true,
+    milestone_view_threshold: 100000,
+  });
+  const [isTestingEmail, setIsTestingEmail] = useState(false);
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -68,8 +87,46 @@ export const AutoPilotModal: React.FC<AutoPilotModalProps> = ({
       if (data.config) {
         setConfig(data.config);
       }
+      if (data.email_alerts) {
+        setEmailAlerts(data.email_alerts);
+      }
     } catch (e) {
       console.error('Failed to load autopilot status', e);
+    }
+  };
+
+  const handleSaveEmailAlerts = async () => {
+    setIsSavingEmail(true);
+    setNotification(null);
+    try {
+      const res = await api.updateAlertConfig(emailAlerts);
+      showNotification('success', res.message || 'Email alert preferences saved successfully!');
+      fetchStatus();
+    } catch (e: any) {
+      showNotification('error', e.message || 'Failed to save email alert settings');
+    } finally {
+      setIsSavingEmail(false);
+    }
+  };
+
+  const handleTestEmailAlert = async () => {
+    if (!emailAlerts.alert_email || !emailAlerts.alert_email.trim()) {
+      showNotification('error', 'Please enter a recipient email address first.');
+      return;
+    }
+    setIsTestingEmail(true);
+    setNotification(null);
+    try {
+      const res = await api.testEmailAlert(emailAlerts.alert_email);
+      if (res.status === 'success') {
+        showNotification('success', res.message);
+      } else {
+        showNotification('error', res.message);
+      }
+    } catch (e: any) {
+      showNotification('error', e.message || 'Test email delivery failed');
+    } finally {
+      setIsTestingEmail(false);
     }
   };
 
@@ -241,6 +298,17 @@ export const AutoPilotModal: React.FC<AutoPilotModalProps> = ({
           >
             <Settings2 className="w-4 h-4" />
             Schedule & Niche Config
+          </button>
+          <button
+            onClick={() => setActiveTab('alerts')}
+            className={`py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'alerts'
+                ? 'border-indigo-500 text-indigo-400 bg-indigo-500/5'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Mail className="w-4 h-4 text-cyan-400" />
+            Email Alerts & 100k Milestones
           </button>
           <button
             onClick={() => setActiveTab('learnings')}
@@ -547,6 +615,214 @@ export const AutoPilotModal: React.FC<AutoPilotModalProps> = ({
                   className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/30 cursor-pointer disabled:opacity-50"
                 >
                   {saving ? 'Saving...' : 'Save Auto-Pilot Settings'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: EMAIL ALERTS & MILESTONES */}
+          {activeTab === 'alerts' && (
+            <div className="space-y-6">
+              {/* Overview Banner */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-indigo-950/30 to-slate-900 border border-cyan-500/30 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-cyan-400 animate-bounce" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                      Automated Incident & Growth Notifications
+                    </span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-white">
+                    Get alerted if the agent gets stuck, or if a video goes viral!
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Sends immediate email notifications when a download is blocked, YouTube token expires, or when an autonomous Short hits 100,000 views.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleTestEmailAlert}
+                  disabled={isTestingEmail}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-md shadow-cyan-600/25 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                >
+                  <Send className={`w-3.5 h-3.5 ${isTestingEmail ? 'animate-spin' : ''}`} />
+                  <span>{isTestingEmail ? 'Sending Test...' : 'Send Test Email'}</span>
+                </button>
+              </div>
+
+              {/* Alert Rules & Destination */}
+              <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-indigo-400" />
+                  Alert Destination & Trigger Rules
+                </h4>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-300">
+                    Your Notification Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={emailAlerts.alert_email || ''}
+                    onChange={(e) => setEmailAlerts({ ...emailAlerts, alert_email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+                    placeholder="e.g. yourname@gmail.com"
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    Where critical error notices and 100k view celebration alerts will be sent.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  {/* Trigger 1: Critical Failures */}
+                  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-950/80 border border-rose-500/20">
+                    <input
+                      type="checkbox"
+                      id="notify_on_error"
+                      checked={emailAlerts.notify_on_error}
+                      onChange={(e) => setEmailAlerts({ ...emailAlerts, notify_on_error: e.target.checked })}
+                      className="mt-0.5 w-4 h-4 text-rose-500 rounded bg-slate-800 border-slate-700 cursor-pointer"
+                    />
+                    <label htmlFor="notify_on_error" className="space-y-1 cursor-pointer">
+                      <div className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                        Pipeline Failure & Stuck Alert
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-snug">
+                        Alert me if YouTube blocks downloads, transcription fails, rendering hangs, or token expires.
+                      </p>
+                    </label>
+                  </div>
+
+                  {/* Trigger 2: Viral Milestones */}
+                  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-950/80 border border-emerald-500/20">
+                    <input
+                      type="checkbox"
+                      id="notify_on_milestone"
+                      checked={emailAlerts.notify_on_milestone}
+                      onChange={(e) => setEmailAlerts({ ...emailAlerts, notify_on_milestone: e.target.checked })}
+                      className="mt-0.5 w-4 h-4 text-emerald-500 rounded bg-slate-800 border-slate-700 cursor-pointer"
+                    />
+                    <label htmlFor="notify_on_milestone" className="space-y-1 cursor-pointer">
+                      <div className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                        <Flame className="w-3.5 h-3.5 text-amber-400" />
+                        Viral View Milestone Alert
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-snug">
+                        Notify me when any autonomous GTA Short reaches a major view milestone.
+                      </p>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Milestone View Count Selector */}
+                <div className="space-y-2 pt-2">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                    Milestone Notification Threshold
+                  </label>
+                  <select
+                    value={emailAlerts.milestone_view_threshold || 100000}
+                    onChange={(e) => setEmailAlerts({ ...emailAlerts, milestone_view_threshold: parseInt(e.target.value, 10) })}
+                    className="w-full sm:w-1/2 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value={10000}>10,000 Views</option>
+                    <option value={50000}>50,000 Views</option>
+                    <option value={100000}>100,000 Views (Recommended)</option>
+                    <option value={500000}>500,000 Views (Half Million)</option>
+                    <option value={1000000}>1,000,000 Views (Viral Mega-Hit)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* SMTP Sender Configuration */}
+              <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                    <Settings2 className="w-4 h-4 text-cyan-400" />
+                    SMTP Outgoing Server Credentials
+                  </h4>
+                  <label className="flex items-center gap-2 text-xs text-slate-300 font-semibold cursor-pointer">
+                    <span>Enable SMTP:</span>
+                    <input
+                      type="checkbox"
+                      checked={emailAlerts.smtp_enabled}
+                      onChange={(e) => setEmailAlerts({ ...emailAlerts, smtp_enabled: e.target.checked })}
+                      className="w-4 h-4 text-indigo-600 rounded bg-slate-800 border-slate-700 cursor-pointer"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-slate-400">SMTP Host</label>
+                    <input
+                      type="text"
+                      value={emailAlerts.smtp_host || 'smtp.gmail.com'}
+                      onChange={(e) => setEmailAlerts({ ...emailAlerts, smtp_host: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+                      placeholder="smtp.gmail.com"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-slate-400">SMTP Port</label>
+                    <input
+                      type="number"
+                      value={emailAlerts.smtp_port || 587}
+                      onChange={(e) => setEmailAlerts({ ...emailAlerts, smtp_port: parseInt(e.target.value, 10) || 587 })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+                      placeholder="587"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-slate-400">Sender Email (Username)</label>
+                    <input
+                      type="email"
+                      value={emailAlerts.smtp_user || ''}
+                      onChange={(e) => setEmailAlerts({ ...emailAlerts, smtp_user: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+                      placeholder="your-account@gmail.com"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-slate-400">
+                      App Password {emailAlerts.has_smtp_password && <span className="text-emerald-400 font-normal">(Saved)</span>}
+                    </label>
+                    <input
+                      type="password"
+                      value={emailAlerts.smtp_password || ''}
+                      onChange={(e) => setEmailAlerts({ ...emailAlerts, smtp_password: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+                      placeholder={emailAlerts.has_smtp_password ? '••••••••••••••••' : '16-character Google App Password'}
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-[11px] text-indigo-200 space-y-1">
+                  <strong>💡 Free Gmail Setup:</strong> In your Google Account, enable 2-Step Verification, visit{' '}
+                  <a
+                    href="https://myaccount.google.com/apppasswords"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline text-cyan-300 hover:text-cyan-200"
+                  >
+                    Google App Passwords
+                  </a>
+                  , generate a 16-character password for "ViralClip", and paste it above.
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="pt-2 flex justify-end">
+                <button
+                  onClick={handleSaveEmailAlerts}
+                  disabled={isSavingEmail}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/30 cursor-pointer disabled:opacity-50"
+                >
+                  {isSavingEmail ? 'Saving...' : 'Save Email Alert Preferences'}
                 </button>
               </div>
             </div>
