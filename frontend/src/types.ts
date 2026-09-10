@@ -221,3 +221,56 @@ export interface WSProgressMessage {
   message: string;
   details?: Record<string, any>;
 }
+
+export interface AutoPilotConfig {
+  enabled: boolean;
+  niche: string;
+  language: string;
+  interval_hours: number;
+  privacy_status: 'public' | 'unlisted';
+  subtitle_preset: 'hormozi' | 'cyber' | 'beast' | 'minimalist';
+  auto_emojis: boolean;
+  max_clip_duration: number;
+  min_clip_duration: number;
+}
+
+export interface AutoPilotState {
+  is_running_cycle: boolean;
+  current_step: string;
+  last_run_time?: string | null;
+  next_run_time?: string | null;
+  last_error?: string | null;
+  total_cycles_completed: number;
+}
+
+export interface AutoPilotUploadRecord {
+  youtube_video_id: string;
+  title: string;
+  uploaded_at: string;
+  view_count: number;
+  like_count: number;
+  comment_count: number;
+  source_video_title: string;
+  virality_score: number;
+  youtube_url: string;
+}
+
+export interface AutoPilotLearnings {
+  winning_topics: string[];
+  avoid_topics: string[];
+  hook_strategies: string[];
+  latest_reflection?: {
+    analyzed_at?: string;
+    total_analyzed?: number;
+    takeaways?: string;
+    next_search_queries?: string[];
+  } | null;
+}
+
+export interface AutoPilotStatusResponse {
+  config: AutoPilotConfig;
+  state: AutoPilotState;
+  channel?: YouTubeChannelInfo | null;
+  learnings: AutoPilotLearnings;
+  recent_uploads: AutoPilotUploadRecord[];
+}

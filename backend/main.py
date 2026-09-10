@@ -32,6 +32,16 @@ from backend.services.transcriber import transcribe_audio
 from backend.services.virality_analyzer import analyze_virality_and_slice
 from backend.services.video_renderer import render_clip_pipeline, detect_best_encoder
 from backend.services.youtube_publisher import upload_video_to_youtube, get_queue, save_queue, add_to_queue
+from backend.services.autopilot_service import (
+    start_autopilot_background_loop,
+    execute_autopilot_cycle,
+    get_autopilot_status,
+    load_autopilot_config,
+    save_autopilot_config,
+    load_agent_memory,
+    AutoPilotConfig,
+    state as autopilot_state
+)
 
 app = FastAPI(title="AI Clipper & YouTube Auto-Poster API", version="1.0.0")
 
@@ -54,6 +64,8 @@ main_loop: Optional[asyncio.AbstractEventLoop] = None
 async def on_startup():
     global main_loop
     main_loop = asyncio.get_running_loop()
+    # Launch 24/7 autonomous background worker
+    asyncio.create_task(start_autopilot_background_loop())
 
 async def broadcast_progress(stage: str, percent: int, message: str, details: Optional[Dict[str, Any]] = None):
     """Broadcasts progress updates to all connected frontend clients."""
@@ -618,6 +630,43 @@ async def delete_queue_item(queue_id: str):
     q = [it for it in q if it.id != queue_id]
     save_queue(q)
     return {"status": "deleted"}
+
+# ==========================================
+# 24/7 AUTOPILOT AI AGENT API
+# ==========================================
+
+@app.get("/api/autopilot/status")
+async def autopilot_status_endpoint():
+    """Returns complete state, config, connected channel details, and AI memory."""
+    return get_autopilot_status()
+
+@app.post("/api/autopilot/config")
+async def autopilot_save_config_endpoint(config: AutoPilotConfig):
+    """Updates Auto-Pilot schedule, niche, language, and posting parameters."""
+    save_autopilot_config(config)
+    return {"status": "saved", "config": config}
+
+@app.post("/api/autopilot/run-now")
+async def autopilot_run_now_endpoint(background_tasks: BackgroundTasks):
+    """Manually triggers an autonomous GTA curation & upload cycle immediately."""
+    if autopilot_state.is_running_cycle:
+        return {"status": "already_running", "message": "An Auto-Pilot cycle is currently in progress."}
+    
+    # Run in background so request returns instantly
+    background_tasks.add_task(execute_autopilot_cycle, force=True)
+    return {"status": "started", "message": "Autonomous GTA cycle initiated."}
+
+@app.get("/api/autopilot/learnings")
+async def autopilot_learnings_endpoint():
+    """Returns AI reflection memory: what worked, what flopped, and top viral hooks."""
+    mem = load_agent_memory()
+    return {
+        "winning_topics": mem.get("winning_topics", []),
+        "avoid_topics": mem.get("avoid_topics", []),
+        "hook_strategies": mem.get("hook_strategies", []),
+        "reflections": mem.get("reflections", []),
+        "total_uploads": len(mem.get("uploads", []))
+    }
 
 def get_frontend_dist() -> Optional[Path]:
     """Finds frontend dist folder across standard and PyInstaller environments."""

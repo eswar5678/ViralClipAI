@@ -262,3 +262,64 @@ def add_to_queue(item: YouTubeQueueItem):
     queue = get_queue()
     queue.insert(0, item)
     save_queue(queue)
+
+def get_uploaded_videos_stats(video_ids: List[str]) -> List[Dict[str, Any]]:
+    """Fetches real-time view counts, likes, and comments for given YouTube video IDs."""
+    if not video_ids:
+        return []
+    try:
+        youtube = get_youtube_service()
+        clean_ids = [v.strip() for v in video_ids if v and v.strip()]
+        if not clean_ids:
+            return []
+        
+        results = []
+        for i in range(0, len(clean_ids), 50):
+            chunk = clean_ids[i:i + 50]
+            resp = youtube.videos().list(
+                part="snippet,statistics",
+                id=",".join(chunk)
+            ).execute()
+            
+            for item in resp.get("items", []):
+                snippet = item.get("snippet", {})
+                stats = item.get("statistics", {})
+                results.append({
+                    "video_id": item.get("id"),
+                    "title": snippet.get("title", ""),
+                    "published_at": snippet.get("publishedAt", ""),
+                    "view_count": int(stats.get("viewCount", 0)),
+                    "like_count": int(stats.get("likeCount", 0)),
+                    "comment_count": int(stats.get("commentCount", 0)),
+                    "thumbnail": snippet.get("thumbnails", {}).get("medium", {}).get("url") or snippet.get("thumbnails", {}).get("default", {}).get("url")
+                })
+        return results
+    except Exception as e:
+        print(f"Error fetching video stats: {e}")
+        return []
+
+def get_recent_channel_uploads(max_results: int = 15) -> List[Dict[str, Any]]:
+    """Retrieves recent videos uploaded to the authenticated channel with live view counts."""
+    try:
+        youtube = get_youtube_service()
+        ch_resp = youtube.channels().list(mine=True, part="contentDetails").execute()
+        items = ch_resp.get("items", [])
+        if not items:
+            return []
+        uploads_playlist_id = items[0]["contentDetails"]["relatedPlaylists"]["uploads"]
+        
+        pl_resp = youtube.playlistItems().list(
+            part="snippet,contentDetails",
+            playlistId=uploads_playlist_id,
+            maxResults=min(max_results, 50)
+        ).execute()
+        
+        video_ids = [
+            it["contentDetails"]["videoId"]
+            for it in pl_resp.get("items", [])
+            if "contentDetails" in it and "videoId" in it["contentDetails"]
+        ]
+        return get_uploaded_videos_stats(video_ids)
+    except Exception as e:
+        print(f"Error fetching channel uploads: {e}")
+        return []

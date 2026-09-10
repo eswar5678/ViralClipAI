@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Cpu, Settings, RefreshCw, Layers, CheckCircle, AlertCircle, Menu, X } from 'lucide-react';
+import { Sparkles, Cpu, Settings, RefreshCw, Layers, CheckCircle, AlertCircle, Menu, X, Bot } from 'lucide-react';
 import { YouTubeIcon } from './YouTubeIcon';
 import { SystemStatus, YouTubeChannelInfo } from '../types';
 
@@ -10,6 +10,7 @@ interface HeaderProps {
   onRefreshStatus: () => void;
   onNewProject: () => void;
   onOpenChat?: () => void;
+  onOpenAutoPilot?: () => void;
   onToggleMobileMenu?: () => void;
   isMobileMenuOpen?: boolean;
 }
@@ -21,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRefreshStatus,
   onNewProject,
   onOpenChat,
+  onOpenAutoPilot,
   onToggleMobileMenu,
   isMobileMenuOpen,
 }) => {
@@ -110,6 +112,20 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <YouTubeIcon className="w-4 h-4 text-red-500" />
         </div>
+
+        {/* 24/7 Auto-Pilot Button */}
+        {onOpenAutoPilot && (
+          <button
+            onClick={onOpenAutoPilot}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-cyan-600/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            title="24/7 GTA Auto-Pilot Agent"
+          >
+            <Bot className="w-4 h-4 text-cyan-200 animate-pulse" />
+            <span className="hidden sm:inline">24/7 Auto-Pilot</span>
+            <span className="sm:hidden">Auto-Pilot</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+          </button>
+        )}
 
         {onOpenChat && (
           <button

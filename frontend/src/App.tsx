@@ -13,6 +13,7 @@ import { ChannelScanner } from './components/ChannelScanner';
 import { AIGrowthTools } from './components/AIGrowthTools';
 import { YouTubeSearch } from './components/YouTubeSearch';
 import { AIChatModal } from './components/AIChatModal';
+import { AutoPilotModal } from './components/AutoPilotModal';
 
 import { api } from './api';
 import {
@@ -26,7 +27,7 @@ import {
   StyleSegment,
   SubtitleSentence,
 } from './types';
-import { ArrowLeft, Play, CheckCircle2, Sparkles, Scissors, Film, Video, Search, Globe } from 'lucide-react';
+import { ArrowLeft, Play, CheckCircle2, Sparkles, Scissors, Film, Video, Search, Globe, Bot } from 'lucide-react';
 import { YouTubeIcon } from './components/YouTubeIcon';
 
 export const App: React.FC = () => {
@@ -35,6 +36,7 @@ export const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isYouTubeModalOpen, setIsYouTubeModalOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isAutoPilotOpen, setIsAutoPilotOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // App Data States
@@ -338,6 +340,7 @@ export const App: React.FC = () => {
         channelInfo={channelInfo}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenChat={() => setIsChatOpen(true)}
+        onOpenAutoPilot={() => setIsAutoPilotOpen(true)}
         onRefreshStatus={loadSystemStatus}
         onNewProject={handleNewProject}
         onToggleMobileMenu={() => setIsMobileMenuOpen((prev) => !prev)}
@@ -355,6 +358,7 @@ export const App: React.FC = () => {
           isProcessing={isProcessing}
           isMobileOpen={isMobileMenuOpen}
           onCloseMobile={() => setIsMobileMenuOpen(false)}
+          onOpenAutoPilot={() => setIsAutoPilotOpen(true)}
         />
 
         {/* Content View Area */}
@@ -667,8 +671,18 @@ export const App: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setIsAutoPilotOpen(true)}
+          className="flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 cursor-pointer"
+        >
+          <div className="p-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+            <Bot className="w-4 h-4 text-cyan-300 animate-pulse" />
+          </div>
+          <span>Auto-Pilot</span>
+        </button>
+
+        <button
           onClick={() => setIsChatOpen(true)}
-          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-semibold text-purple-400 hover:text-purple-300 cursor-pointer"
+          className="flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-semibold text-purple-400 hover:text-purple-300 cursor-pointer"
         >
           <div className="p-1 rounded-lg bg-purple-500/10 border border-purple-500/20">
             <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
@@ -678,7 +692,7 @@ export const App: React.FC = () => {
 
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-semibold text-slate-400 hover:text-slate-200 cursor-pointer"
+          className="flex flex-col items-center gap-1 py-1 px-2 rounded-xl text-[10px] font-semibold text-slate-400 hover:text-slate-200 cursor-pointer"
         >
           <div className="p-1 rounded-lg">
             <Sparkles className="w-4 h-4 text-indigo-400" />
@@ -738,6 +752,13 @@ export const App: React.FC = () => {
           }
           loadQueue();
         }}
+      />
+
+      {/* 24/7 GTA Auto-Pilot Agent Modal */}
+      <AutoPilotModal
+        isOpen={isAutoPilotOpen}
+        onClose={() => setIsAutoPilotOpen(false)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
     </div>
   );

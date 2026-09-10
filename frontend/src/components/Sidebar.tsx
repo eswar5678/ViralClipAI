@@ -10,6 +10,7 @@ import {
   Sparkles,
   Search,
   X,
+  Bot,
 } from 'lucide-react';
 
 export type TabType =
@@ -31,6 +32,7 @@ interface SidebarProps {
   isProcessing: boolean;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
+  onOpenAutoPilot?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -41,6 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isProcessing,
   isMobileOpen = false,
   onCloseMobile,
+  onOpenAutoPilot,
 }) => {
   const navItems = [
     {
@@ -112,6 +115,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navContent = (
     <div className="space-y-1">
+      {onOpenAutoPilot && (
+        <div
+          onClick={() => {
+            onOpenAutoPilot();
+            if (onCloseMobile) onCloseMobile();
+          }}
+          className="p-3 mb-3 rounded-xl bg-gradient-to-r from-cyan-950/50 via-indigo-950/40 to-purple-950/50 border border-cyan-500/40 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-900/20 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-white tracking-tight">24/7 GTA Auto-Pilot</span>
+            </div>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          </div>
+          <p className="text-[11px] text-slate-400 leading-tight">
+            Autonomous AI curation & publishing 24/7
+          </p>
+        </div>
+      )}
+
       <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
         Navigation
       </div>

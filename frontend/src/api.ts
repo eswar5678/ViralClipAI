@@ -13,6 +13,8 @@ import {
   YouTubeUploadRequest,
   YouTubeQueueItem,
   WSProgressMessage,
+  AutoPilotConfig,
+  AutoPilotStatusResponse,
 } from './types';
 
 export const BACKEND_URL_STORAGE_KEY = 'viralclip_backend_url';
@@ -471,5 +473,36 @@ export const api = {
     };
 
     return ws;
-  }
+  },
+
+  // 24/7 Auto-Pilot API methods
+  async getAutoPilotStatus(): Promise<AutoPilotStatusResponse> {
+    const res = await fetch(`${getApiBaseUrl()}/autopilot/status`);
+    if (!res.ok) throw new Error('Failed to fetch Auto-Pilot status');
+    return res.json();
+  },
+
+  async updateAutoPilotConfig(config: AutoPilotConfig): Promise<{ status: string; config: AutoPilotConfig }> {
+    const res = await fetch(`${getApiBaseUrl()}/autopilot/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    if (!res.ok) throw new Error('Failed to save Auto-Pilot settings');
+    return res.json();
+  },
+
+  async triggerAutoPilotRunNow(): Promise<{ status: string; message: string }> {
+    const res = await fetch(`${getApiBaseUrl()}/autopilot/run-now`, {
+      method: 'POST',
+    });
+    if (!res.ok) throw new Error('Failed to trigger Auto-Pilot cycle');
+    return res.json();
+  },
+
+  async getAutoPilotLearnings(): Promise<any> {
+    const res = await fetch(`${getApiBaseUrl()}/autopilot/learnings`);
+    if (!res.ok) throw new Error('Failed to fetch Auto-Pilot learnings');
+    return res.json();
+  },
 };
