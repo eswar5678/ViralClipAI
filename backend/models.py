@@ -87,7 +87,7 @@ class RenderClipRequest(BaseModel):
     transcript_sentences: Optional[List[SubtitleSentence]] = None
 
 class YouTubeUploadRequest(BaseModel):
-    clip_id: str
+    clip_id: str = ""
     title: str
     description: str
     tags: List[str] = []

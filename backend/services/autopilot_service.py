@@ -339,6 +339,7 @@ def execute_autopilot_cycle() -> Dict[str, Any]:
         state.current_step = "Publishing Short to YouTube Channel"
         print(f"[AutoPilot] Step 7/7: Uploading to YouTube as {config.privacy_status.upper()}...")
         upload_req = YouTubeUploadRequest(
+            clip_id=best_clip.clip_id,
             title=headline,
             description=ai_desc.get("main_description", f"Insane GTA Moment! Like & Subscribe! #Shorts #GTA5 #Gaming"),
             tags=ai_tags.get("tags_list", ["GTA5", "Shorts", "Gaming", "GTAOnline", "FunnyMoments"]),
