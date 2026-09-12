@@ -163,7 +163,7 @@ def fetch_channel_via_api(channel_url: str, max_videos: int, api_key: str) -> Op
 def fetch_channel_latest_videos(channel_url: str, max_videos: int = 10) -> Dict[str, Any]:
     """Fetches channel information and latest videos using YouTube Data API v3 with yt-dlp fallback."""
     settings = load_settings()
-    api_key = settings.youtube_api_key or "AIzaSyBZYh2zhmgKucpo5274IQNnCcW_JLXDO-Y"
+    api_key = settings.youtube_api_key or ""
     
     # Try official YouTube Data API v3 first
     if api_key and api_key.strip():
