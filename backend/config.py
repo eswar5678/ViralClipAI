@@ -28,7 +28,7 @@ class AppSettings(BaseModel):
     gemini_api_key: Optional[str] = ""
     openai_api_key: Optional[str] = ""
     groq_api_key: Optional[str] = ""
-    youtube_api_key: Optional[str] = "AIzaSyBZYh2zhmgKucpo5274IQNnCcW_JLXDO-Y"
+    youtube_api_key: Optional[str] = ""
     youtube_client_id: Optional[str] = ""
     youtube_client_secret: Optional[str] = ""
     youtube_channel_name: Optional[str] = ""
