@@ -180,7 +180,7 @@ def search_youtube(
 ) -> List[Dict[str, Any]]:
     """Hybrid search function trying official YouTube API first then yt-dlp."""
     settings = load_settings()
-    api_key = settings.youtube_api_key or "AIzaSyBZYh2zhmgKucpo5274IQNnCcW_JLXDO-Y"
+    api_key = settings.youtube_api_key or ""
 
     if api_key and api_key.strip():
         api_results = search_youtube_api(
